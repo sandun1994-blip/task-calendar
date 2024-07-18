@@ -47,7 +47,13 @@ export function useCreateEvent(handleReset: () => void) {
 export function useUpdateEvent(handleReset: () => void) {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({ data, id }: { data: EventSchemaType; id: string }) => {
+    mutationFn: async ({
+      data,
+      id,
+    }: {
+      data: Partial<EventSchemaType>;
+      id: string;
+    }) => {
       const event = await updateEvent(id, data);
       if (event.error) {
         throw new Error(event.error);
@@ -66,20 +72,18 @@ export function useUpdateEvent(handleReset: () => void) {
       toast.success(`Event Updated successfully!`, {
         position: "top-right",
         className: "text-green-500",
-        duration: 5000,
+        duration: 1000,
       });
-      console.log(data, variables.id);
-
       // queryClient.setQueryData(['events', { id: variables.id }], data)
       queryClient.invalidateQueries({ queryKey: ["events"] });
       handleReset();
     },
     onError: (error, variables, context) => {
-      console.log(error.message, 88);
+      // console.log(error.message, 88);
 
       toast.error(error.message, {
         position: "top-right",
-        duration: 5000,
+        duration: 3000,
       });
     },
     onSettled: () => {},

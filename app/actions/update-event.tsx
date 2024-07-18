@@ -5,26 +5,30 @@ import { ReturnType } from "./type";
 import { revalidatePath } from "next/cache";
 import { db } from "@/lib/db";
 
-export async function updateEvent(id:string,data: EventSchemaType): Promise<ReturnType> {
-  const validationResult = EventSchema.safeParse(data);
-
-  if (!validationResult.success) {
+export async function updateEvent(
+  id: string,
+  data: Partial<EventSchemaType>
+): Promise<ReturnType> {
+  if (!id) {
     return {
-      error: "Field Error",
+      error: "Can not find Id",
     };
   }
 
-  let event;
+  const { roles, ...rest } = data;
 
+  let event;
   try {
     event = await db.event.update({
-        where:{id},
+      where: { id },
       data: {
-        ...data,
-        roles: {
+        ...rest,
+        ...(data.roles && {
+          roles: {
             deleteMany: {}, // Delete existing roles
             create: data.roles.map((role) => ({ role })), // Create new roles
-        },
+          },
+        }),
       },
     });
   } catch (error) {
