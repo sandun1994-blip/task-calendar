@@ -15,16 +15,16 @@ interface Props {
   setOpen: Dispatch<SetStateAction<boolean>>;
   open: boolean;
   id:string |number
+  handleReset:()=>void
 }
 
 export function AlertDialogBox({
   open,
   setOpen,
+  id,
+  handleReset
 }: Props) {
-  const handleReset = () => {
-    setOpen((pre) => !pre);
-   
-  };
+ 
 
   const { mutate: deleteEvent, isPending } = useDeleteEvent(handleReset);
   const handleClose = () => {
@@ -32,9 +32,9 @@ export function AlertDialogBox({
   };
 
   const deleteHandle = () => {
-    // if (id) {
-    //   deleteEvent(selectedtask.id);
-    // }
+    
+   deleteEvent(id as string);
+   
   };
 
   return (
@@ -44,7 +44,7 @@ export function AlertDialogBox({
           <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
           <AlertDialogDescription>
             This action cannot be undone. This will permanently delete your
-            account and remove your data from servers.
+            event.
           </AlertDialogDescription>
         </AlertDialogHeader>
         <AlertDialogFooter >

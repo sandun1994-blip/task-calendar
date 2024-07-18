@@ -30,9 +30,6 @@ const EventCalendar: React.FC = () => {
 
 const {data} =useGetEvents()
 
-
-
-
   const [view, setView] = useState<View>(Views.MONTH);
   const [date, setDate] = useState<Date>(new Date());
   const [open,setOpen]= useState(false)
