@@ -1,4 +1,10 @@
-import React, { Dispatch, SetStateAction, useMemo, useState } from "react";
+import React, {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 import {
   Dialog,
   DialogContent,
@@ -21,12 +27,12 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { Input } from "../ui/input";
 import { Textarea } from "../ui/textarea";
 import moment from "moment";
-import {
-  useCreateEvent,
-  useUpdateEvent,
-} from "@/services/mutaions";
+import { useCreateEvent, useUpdateEvent } from "@/services/mutaions";
 import { Trash, Trash2Icon } from "lucide-react";
 import { AlertDialogBox } from "./alert-box";
+import { MultiSelect } from "../multi-select";
+import { Options } from "@/data/data";
+import { Role } from "@prisma/client";
 
 interface EventDataType extends EventSchemaType {
   id?: string | number;
@@ -48,7 +54,6 @@ const EventForm = ({ open, setOpen, selectedEvent, handleClose }: Props) => {
     useCreateEvent(handleReset);
   const { mutate: updateEvent, isPending: updateStatus } =
     useUpdateEvent(handleReset);
-
   const [alertOpen, setAlertOpen] = useState(false);
 
   const defaultFormData = useMemo(() => {
@@ -68,12 +73,13 @@ const EventForm = ({ open, setOpen, selectedEvent, handleClose }: Props) => {
   });
 
   const onSubmit = (values: EventSchemaType) => {
+    
     if (selectedEvent?.id) {
       // update
       updateEvent({ data: values, id: selectedEvent.id as string });
     } else {
       console.log("add", values);
-      createEvent(values);
+      createEvent(values)
       // create
     }
   };
@@ -205,6 +211,29 @@ const EventForm = ({ open, setOpen, selectedEvent, handleClose }: Props) => {
                             {...field}
                             value={moment(field.value).format("YYYY-MM-DD")}
                             readOnly
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
+                    name="roles"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Roles</FormLabel>
+                        <FormControl>
+                          <MultiSelect
+                            options={Options}
+                            onValueChange={field.onChange}
+                            className="w-[360px]"
+                            placeholder={"Add Roles"}
+                            variant="inverted"
+                            animation={2}
+                            maxCount={3}
+                            defaultValue={field.value}
                           />
                         </FormControl>
                         <FormMessage />

@@ -28,5 +28,5 @@ export const defaultEvent = {
   time: "",
   location: "",
   description: "",
-  roles: [Role.STUDENT],
+  roles: [],
 };

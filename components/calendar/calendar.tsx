@@ -41,8 +41,8 @@ const EventCalendar: React.FC = () => {
 
   useEffect(() => {
     if (data) {
-      setEvents(
-        data.map(({ id, description, end, location, start, time, title }) => ({
+      const eventData = data.map(
+        ({ id, description, end, location, start, time, title, roles }) => ({
           id,
           title,
           allDay: true,
@@ -53,16 +53,17 @@ const EventCalendar: React.FC = () => {
             start,
             end,
             location,
-            roles: ["PARENT", "STUDENT"],
+            roles: roles.map((item) => item.role),
             time,
             title,
           },
-        }))
+        })
       );
+      setEvents(eventData);
     }
   }, [data]);
 
-  const onEventDrop = ({ event, start, end,}: any) => {
+  const onEventDrop = ({ event, start, end }: any) => {
     const isChange =
       JSON.stringify(start) === JSON.stringify(event.start) ||
       JSON.stringify(end) === JSON.stringify(event.end);
@@ -86,11 +87,11 @@ const EventCalendar: React.FC = () => {
     setOpen((pre) => !pre);
   };
 
-  const onEventResize = ({ event, start, end,}: any) => {  
+  const onEventResize = ({ event, start, end }: any) => {
     const isChange =
       JSON.stringify(start) === JSON.stringify(event.start) &&
       JSON.stringify(end) === JSON.stringify(event.end);
-      // console.log("resize",isChange);
+    // console.log("resize",isChange);
     if (!isChange && event.id) {
       updateEvent({ data: { start, end }, id: event.id });
       const updatedEvents = events.map((evt) =>
@@ -104,7 +105,7 @@ const EventCalendar: React.FC = () => {
 
   const handleOnChangeView = (selectedView: View) => {
     console.log("view");
-    console.log(selectedView);
+    // console.log(selectedView);
     setView(selectedView);
   };
 
