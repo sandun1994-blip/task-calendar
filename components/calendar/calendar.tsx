@@ -1,5 +1,5 @@
 "use client";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
   Calendar,
   Event,
@@ -16,6 +16,9 @@ import { defaultEvent, EventSchemaType } from "@/schemas";
 import { useGetEvents } from "@/services/quires";
 import Overlay from "../over-lay";
 import { useUpdateEvent } from "@/services/mutaions";
+import { MultiSelect } from "../multi-select";
+import { Options } from "@/data/data";
+import { checkRoles } from "@/lib/utils";
 
 // Extend the Event interface to include
 
@@ -36,6 +39,7 @@ const EventCalendar: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] =
     useState<EventDataType>(defaultEvent);
+    const [roles,setSelectRoles] =useState<string[]>([])
 
   const [events, setEvents] = useState<Event[]>([]);
 
@@ -123,8 +127,13 @@ const EventCalendar: React.FC = () => {
     setOpen((pre) => !pre);
   };
 
+const filterEvents=useMemo(()=>{
+  return events.filter(item=>(roles.length>0?checkRoles(item.data.roles,roles):true))
+},[events, roles])
+
+
   return (
-    <>
+    <div className="container space-y-5 flex flex-col justify-center items-center">
       {open && (
         <EventForm
           open={open}
@@ -133,10 +142,19 @@ const EventCalendar: React.FC = () => {
           handleClose={handleClose}
         />
       )}
+      <div className=" w-full flex justify-center">
+        <MultiSelect
+          options={Options}
+          onValueChange={setSelectRoles}
+          defaultValue={roles}
+          className="w-[350px] mr-24 "
+          placeholder="Select Role"
+        />
+      </div>
 
       <DragAndDropCalendar
         localizer={localizer}
-        events={events}
+        events={filterEvents}
         startAccessor={(event: Event) => event.start as Date}
         endAccessor={(event: Event) => event.end as Date}
         onEventDrop={onEventDrop}
@@ -155,7 +173,7 @@ const EventCalendar: React.FC = () => {
         defaultView={Views.MONTH}
         showMultiDayTimes
       />
-    </>
+    </div>
   );
 };
 
