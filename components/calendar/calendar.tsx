@@ -11,6 +11,7 @@ import withDragAndDrop from "react-big-calendar/lib/addons/dragAndDrop";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import "react-big-calendar/lib/addons/dragAndDrop/styles.css";
+import "./index.css";
 import EventForm from "./event-form";
 import { defaultEvent, EventSchemaType } from "@/schemas";
 import { useGetEvents } from "@/services/quires";
@@ -18,7 +19,9 @@ import Overlay from "../over-lay";
 import { useUpdateEvent } from "@/services/mutaions";
 import { MultiSelect } from "../multi-select";
 import { Options } from "@/data/data";
-import { checkRoles } from "@/lib/utils";
+import { addDate, checkRoles, getTime, timezoneFormat } from "@/lib/utils";
+import EventComponent from "./event";
+import { EventCategory } from "@prisma/client";
 
 // Extend the Event interface to include
 
@@ -39,69 +42,100 @@ const EventCalendar: React.FC = () => {
   const [open, setOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] =
     useState<EventDataType>(defaultEvent);
-    const [roles,setSelectRoles] =useState<string[]>([])
+  const [roles, setSelectRoles] = useState<string[]>([]);
 
   const [events, setEvents] = useState<Event[]>([]);
 
   useEffect(() => {
     if (data) {
       const eventData = data.map(
-        ({ id, description, end, location, start, time, title, roles }) => ({
+        ({
           id,
-          title,
-          allDay: true,
-          start,
+          description,
           end,
-          data: {
-            description,
+          location,
+          start,
+          endTime,
+          eventCategory,
+          startTime,
+          title,
+          roles,
+        }) => {
+          return {
+            id,
+            title,
             start,
             end,
-            location,
-            roles: roles.map((item) => item.role),
-            time,
-            title,
-          },
-        })
+            data: {
+              description,
+              start,
+              end,
+              location,
+              roles: roles.map((item) => item.role),
+              endTime,
+              eventCategory,
+              startTime,
+              title,
+            },
+          };
+        }
       );
       setEvents(eventData);
     }
   }, [data]);
 
   const onEventDrop = ({ event, start, end }: any) => {
+    console.log("drop");
+    const startTime = getTime(start);
+    const endTime = getTime(end);
+
     const isChange =
       JSON.stringify(start) === JSON.stringify(event.start) ||
       JSON.stringify(end) === JSON.stringify(event.end);
 
     if (!isChange && event.id) {
-      // console.log(isChange,start,end);
-      updateEvent({ data: { start, end }, id: event.id });
+      //  console.log(isChange,start,end);
+      updateEvent({ data: { start, end, startTime, endTime }, id: event.id });
       const updatedEvents = events.map((evt) =>
-        evt.id === event.id
-          ? { ...evt, start: new Date(start), end: new Date(end) }
-          : evt
+        evt.id === event.id ? { ...evt, start, end, startTime, endTime } : evt
       );
       setEvents(updatedEvents);
     }
   };
 
-  const onSelectSlot = ({ start, end }: { start: Date; end: Date }) => {
-    // const endDate = new Date(end);
-    // endDate.setDate(endDate.getDate() - 1);
-    setSelectedEvent((pre) => ({ ...pre, start, end }));
+  const onSelectSlot = ({
+    start,
+    end,
+    slots,
+  }: {
+    start: Date;
+    end: Date;
+    slots: Date[];
+  }) => {
+    const startDate = slots[0];
+    const endDate = slots.pop() as Date;
+
+    setSelectedEvent((pre) => ({ ...pre, start: startDate, end: endDate }));
     setOpen((pre) => !pre);
   };
 
   const onEventResize = ({ event, start, end }: any) => {
+    const startTime = getTime(start);
+    const endTime = getTime(end);
+
+    console.log("resSize");
+
     const isChange =
       JSON.stringify(start) === JSON.stringify(event.start) &&
       JSON.stringify(end) === JSON.stringify(event.end);
     // console.log("resize",isChange);
     if (!isChange && event.id) {
-      updateEvent({ data: { start, end }, id: event.id });
+      updateEvent({
+        data: { start, end, startTime, endTime },
+        id: event.id,
+      });
       const updatedEvents = events.map((evt) =>
-        evt.id === event.id
-          ? { ...evt, start: new Date(start), end: new Date(end) }
-          : evt
+        evt.id === event.id ? { ...evt, start, end, startTime, endTime } : evt
       );
       setEvents(updatedEvents);
     }
@@ -127,10 +161,44 @@ const EventCalendar: React.FC = () => {
     setOpen((pre) => !pre);
   };
 
-const filterEvents=useMemo(()=>{
-  return events.filter(item=>(roles.length>0?checkRoles(item.data.roles,roles):true))
-},[events, roles])
+  const filterEvents = useMemo(() => {
+    return events.filter((item) =>
+      roles.length > 0 ? checkRoles(item.data.roles, roles) : true
+    );
+  }, [events, roles]);
 
+  // console.log({ filterEvents });
+  // console.log({events});
+  let formats = {
+    timeGutterFormat: "HH:mm",
+  };
+
+  const components = {
+    event: (props: any) => {
+      return <EventComponent {...props} />;
+    },
+  };
+  const eventStyleGetter = useCallback((event: any) => {
+    const category = event?.data?.eventCategory;
+    const backgroundColor =
+      category === EventCategory.ONE
+        ? "#EE6769"
+        : category === EventCategory.TWO
+        ? "#3B82F6"
+        : "#4CCF7C";
+
+    const style = {
+      backgroundColor: backgroundColor,
+      borderRadius: "5px",
+      opacity: 1,
+      color: "black",
+      border: "0px",
+      display: "block",
+    };
+    return {
+      style: style,
+    };
+  }, []);
 
   return (
     <div className="container space-y-5 flex flex-col justify-center items-center">
@@ -140,6 +208,7 @@ const filterEvents=useMemo(()=>{
           setOpen={setOpen}
           selectedEvent={selectedEvent}
           handleClose={handleClose}
+          setSelectedEvent={setSelectedEvent}
         />
       )}
       <div className=" w-full flex justify-center">
@@ -154,9 +223,12 @@ const filterEvents=useMemo(()=>{
 
       <DragAndDropCalendar
         localizer={localizer}
+        eventPropGetter={eventStyleGetter}
+        formats={formats}
         events={filterEvents}
-        startAccessor={(event: Event) => event.start as Date}
-        endAccessor={(event: Event) => event.end as Date}
+        components={components}
+        startAccessor="start"
+        endAccessor="end"
         onEventDrop={onEventDrop}
         onSelectSlot={onSelectSlot}
         selectable

@@ -18,10 +18,12 @@ model Event {
   title       String
   start       DateTime
   end         DateTime
-  time        String
+  startTime   String
+  endTime     String
   location    String
   description String
   roles       EventRole[]
+  eventCategory EventCategory @default(ONE)
 }
 
 model EventRole {
@@ -34,4 +36,10 @@ model EventRole {
 enum Role {
   STUDENT
   PARENT
+}
+
+enum EventCategory {
+  ONE
+  TWO
+  THREE
 }

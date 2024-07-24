@@ -29,6 +29,7 @@ export function AlertDialogBox({
   const { mutate: deleteEvent, isPending } = useDeleteEvent(handleReset);
   const handleClose = () => {
     setOpen((pre) => !pre);
+    handleReset()
   };
 
   const deleteHandle = () => {

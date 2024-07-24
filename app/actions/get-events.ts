@@ -12,7 +12,9 @@ export async function getEvent(): Promise<GetReturnType> {
         title: true,
         start: true,
         end: true,
-        time: true,
+        startTime: true,
+        endTime:true,
+        eventCategory:true,
         location: true,
         description: true,
         roles:true

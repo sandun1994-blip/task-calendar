@@ -7,10 +7,12 @@ export function useGetEvents() {
     queryFn: async () => {
       try {
         const events = await getEvent();
+        
         if (events.error) {
           throw new Error(events.error);
         }
         if (events.data) {
+          
           return events.data;
         }
       } catch (error) {

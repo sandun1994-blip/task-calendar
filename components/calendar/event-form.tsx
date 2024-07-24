@@ -15,11 +15,19 @@ import {
 import {
   Form,
   FormControl,
+  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "../ui/form";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "../ui/select";
 import { Button } from "../ui/button";
 import { useForm } from "react-hook-form";
 import { defaultEvent, EventSchema, EventSchemaType } from "@/schemas";
@@ -32,7 +40,9 @@ import { Trash, Trash2Icon } from "lucide-react";
 import { AlertDialogBox } from "./alert-box";
 import { MultiSelect } from "../multi-select";
 import { Options } from "@/data/data";
-import { Role } from "@prisma/client";
+import { EventCategory, Role } from "@prisma/client";
+import { DatePicker } from "../date-picker";
+import {  timezoneFormat } from "@/lib/utils";
 
 interface EventDataType extends EventSchemaType {
   id?: string | number;
@@ -43,11 +53,13 @@ type Props = {
   setOpen: Dispatch<SetStateAction<boolean>>;
   selectedEvent: EventDataType;
   handleClose: () => void;
+  setSelectedEvent: Dispatch<SetStateAction<EventDataType>>
 };
 
-const EventForm = ({ open, setOpen, selectedEvent, handleClose }: Props) => {
+const EventForm = ({ open, setOpen, selectedEvent, handleClose,setSelectedEvent }: Props) => {
   const handleReset = () => {
     setOpen((pre) => !pre);
+    setSelectedEvent(defaultEvent);
   };
   const id = selectedEvent?.id;
   const { mutate: createEvent, isPending: createStatus } =
@@ -73,13 +85,22 @@ const EventForm = ({ open, setOpen, selectedEvent, handleClose }: Props) => {
   });
 
   const onSubmit = (values: EventSchemaType) => {
-    
     if (selectedEvent?.id) {
       // update
-      updateEvent({ data: values, id: selectedEvent.id as string });
+      updateEvent({
+        data: {
+          ...values,
+          start: timezoneFormat(values.start, values.startTime),
+          end: timezoneFormat(values.end, values.endTime),
+        },
+        id: selectedEvent.id as string,
+      });
     } else {
-      console.log("add", values);
-      createEvent(values)
+      createEvent({
+        ...values,
+        start: timezoneFormat(values.start, values.startTime),
+        end: timezoneFormat(values.end, values.endTime),
+      });
       // create
     }
   };
@@ -181,43 +202,52 @@ const EventForm = ({ open, setOpen, selectedEvent, handleClose }: Props) => {
                       </FormItem>
                     )}
                   />
-
-                  <FormField
-                    control={form.control}
-                    name="start"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Start Date</FormLabel>
-                        <FormControl>
-                          <Input
+                  <div className=" flex justify-between">
+                    <FormField
+                      control={form.control}
+                      name="start"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Start Date</FormLabel>
+                          <FormControl>
+                            <DatePicker
+                              date={field.value}
+                              setDate={field.onChange}
+                            />
+                            {/* <Input
                             {...field}
                             value={moment(field.value).format("YYYY-MM-DD")}
-                            readOnly
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                            
+                          /> */}
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="end"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>End Date</FormLabel>
-                        <FormControl>
-                          <Input
+                    <FormField
+                      control={form.control}
+                      name="end"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>End Date</FormLabel>
+                          <FormControl>
+                            <DatePicker
+                              date={field.value}
+                              setDate={field.onChange}
+                              shape={`ml-4`}
+                            />
+                            {/* <Input
                             {...field}
                             value={moment(field.value).format("YYYY-MM-DD")}
-                            readOnly
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
-
+                            
+                          /> */}
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                   <FormField
                     control={form.control}
                     name="roles"
@@ -240,23 +270,86 @@ const EventForm = ({ open, setOpen, selectedEvent, handleClose }: Props) => {
                       </FormItem>
                     )}
                   />
+                  <div className="w-[360px]">
+                    <FormField
+                      control={form.control}
+                      name="eventCategory"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Event Category</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            defaultValue={field.value}
+                          >
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select a category" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent className="space-y-5">
+                              <SelectItem
+                                value={EventCategory.ONE}
+                                className="bg-red-500 mb-2 hover:bg-red-300"
+                              >
+                                {EventCategory.ONE}
+                              </SelectItem>
+                              <SelectItem
+                                value={EventCategory.TWO}
+                                className="bg-blue-500 mb-2 hover:bg-blue-300"
+                              >
+                                {EventCategory.TWO}
+                              </SelectItem>
+                              <SelectItem
+                                value={EventCategory.THREE}
+                                className="bg-green-500 mb-2 hover:bg-green-300"
+                              >
+                                {EventCategory.THREE}
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormDescription>
+                            You can choose one category.
+                          </FormDescription>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+                  <div className="flex gap-5 justify-between">
+                    <FormField
+                      control={form.control}
+                      name="startTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Start Time</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="time" // Set type to 'time' for time input
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
-                  <FormField
-                    control={form.control}
-                    name="time"
-                    render={({ field }) => (
-                      <FormItem>
-                        <FormLabel>Time</FormLabel>
-                        <FormControl>
-                          <Input
-                            {...field}
-                            type="time" // Set type to 'time' for time input
-                          />
-                        </FormControl>
-                        <FormMessage />
-                      </FormItem>
-                    )}
-                  />
+                    <FormField
+                      control={form.control}
+                      name="endTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>End Time</FormLabel>
+                          <FormControl>
+                            <Input
+                              {...field}
+                              type="time" // Set type to 'time' for time input
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
                 <Button
                   type="submit"

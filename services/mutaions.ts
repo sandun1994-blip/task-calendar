@@ -54,6 +54,7 @@ export function useUpdateEvent(handleReset: () => void) {
       data: Partial<EventSchemaType>;
       id: string;
     }) => {
+      
       const event = await updateEvent(id, data);
       if (event.error) {
         throw new Error(event.error);
